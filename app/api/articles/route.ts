@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   console.log('📡 URL reçue du front:', url)
 
   try {
-    // 🔹 Étape 1 : récupérer les liens du blog
+    
     const firecrawlLinksRes = await fetch(
       'https://api.firecrawl.dev/v1/scrape',
       {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const articles: Article[] = []
 
-    // 🔹 Étape 2 : parcourir les liens pour extraire les métadonnées
+  
     for (const link of links.slice(0, 10)) {
       const metaRes = await fetch('https://api.firecrawl.dev/v1/scrape', {
         method: 'POST',
