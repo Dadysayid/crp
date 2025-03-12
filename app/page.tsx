@@ -23,14 +23,16 @@ export default function Home() {
     })
 
     const data = await res.json()
-    console.log('📥 Articles from API:', data)
+    console.log('📥 Articles from GPT:', data)
     setArticles(data)
     setLoading(false)
   }
 
   return (
     <main className='p-8 max-w-4xl mx-auto'>
-      <h1 className='text-3xl font-bold mb-4'>Blog Article Scraper</h1>
+      <h1 className='text-3xl font-bold mb-4'>
+        Blog Article Scraper (GPT + Firecrawl)
+      </h1>
 
       <input
         type='text'
