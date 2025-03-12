@@ -10,6 +10,13 @@ function truncateMarkdown(md: string, maxLength: number): string {
   return truncated.slice(0, lastHeader)
 }
 
+type Article = {
+  title: string
+  description: string
+  link: string
+  imageUrl: string
+}
+
 export async function POST(req: NextRequest) {
   const { url } = await req.json()
   console.log('📡 URL received from frontend:', url)
@@ -38,33 +45,62 @@ export async function POST(req: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: `You are an expert markdown parser. From the provided markdown, extract only valid blog articles. For each article, return a JSON object with the following structure:
+          content: `You are an expert markdown parser. You will receive raw markdown content from a blog page.
+
+Your goal is to extract only real blog articles and ignore irrelevant content. For each blog post, return an object with:
 
 {
   "title": "The title of the article",
-  "description": "A short summary or intro",
-  "link": "A direct link to the article",
-  "imageUrl": "The image URL if available"
+  "description": "A short summary (2–3 lines)",
+  "link": "A direct URL to the article (if available)",
+  "imageUrl": "An image URL related to the article (if available)"
 }
 
-Exclude cookie banners, legal text, or irrelevant content. Only return a valid JSON array of articles.`,
+✅ Include only relevant blog articles.  
+❌ Exclude cookie banners, legal mentions, privacy info, newsletter sections, contact forms, and unrelated site content.
+
+⚠️ Return a **clean JSON array only**, nothing else.  
+Do not wrap in markdown. Do not explain. Do not include any text outside the JSON.`,
         },
         {
           role: 'user',
           content: safeMarkdown,
         },
       ],
-  
     })
 
-    const parsed = chatResponse.choices[0]?.message?.content || '[]'
-    const articles = JSON.parse(parsed)
+    const raw = chatResponse.choices[0]?.message?.content || '[]'
+    console.log('📤 Raw GPT response:', raw)
+
+    const cleanJson = raw
+      .trim()
+      .replace(/^```json/, '')
+      .replace(/^```/, '')
+      .replace(/```$/, '')
+      .trim()
+
+    let articles: Article[] = []
+
+    if (cleanJson.startsWith('[') && cleanJson.endsWith(']')) {
+      try {
+        articles = JSON.parse(cleanJson)
+      } catch (parseError) {
+        console.error('❌ JSON parsing failed:', parseError)
+        console.error('🔍 Cleaned GPT response:', cleanJson)
+        return NextResponse.json(
+          { error: 'Invalid JSON format from GPT (Firecrawl).' },
+          { status: 500 }
+        )
+      }
+    } else {
+      console.warn('⚠️ GPT did not return a JSON array.')
+      articles = []
+    }
 
     console.log('📰 Articles extracted:', articles)
-
     return NextResponse.json(articles)
   } catch (err) {
-    console.error('❌ Error:', err)
+    console.error('❌ Firecrawl or GPT error:', err)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
 }
