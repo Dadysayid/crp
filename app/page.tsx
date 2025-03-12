@@ -30,9 +30,7 @@ export default function Home() {
 
   return (
     <main className='p-8 max-w-4xl mx-auto'>
-      <h1 className='text-3xl font-bold mb-4'>
-        Blog Article Scraper (GPT + Firecrawl)
-      </h1>
+      <h1 className='text-3xl font-bold mb-4'>Blog Article Scraper</h1>
 
       <input
         type='text'
